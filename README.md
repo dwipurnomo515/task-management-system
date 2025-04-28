@@ -14,7 +14,7 @@ Sistem manajemen tugas internal untuk memantau pekerjaan harian dari tim interna
 
 1. Clone repository
 ```bash
-git clone [URL_REPOSITORY]
+git clone https://github.com/dwipurnomo515/task-management-system.git
 cd task-management-system
 ```
 
