@@ -57,42 +57,28 @@ class TaskResource extends Resource
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('deadline')
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('project.name')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('assignee.name')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('creator.name')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->badge()
+                    ->color(fn($state) => match ($state) {
+                        'todo' => 'warning',
+                        'in_progress' => 'primary',
+                        'done' => 'success',
+                        default => 'gray',
+                    })
+                    ->label('Status'),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn () => auth()->user()->hasPermissionTo('delete_task')),
+                    ->visible(fn() => auth()->user()->hasPermissionTo('delete_task')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()->hasPermissionTo('delete_any_task')),
+                        ->visible(fn() => auth()->user()->hasPermissionTo('delete_any_task')),
                 ]),
             ]);
     }
@@ -112,6 +98,17 @@ class TaskResource extends Resource
             'view' => Pages\ViewTask::route('/{record}'),
             'edit' => Pages\EditTask::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (!auth()->user()->hasRole('super-admin')) {
+            $query->where('assigned_to', auth()->id());
+        }
+
+        return $query;
     }
 
     public static function canViewAny(): bool
